@@ -14,7 +14,7 @@ endtime="2524626000"
 stdout=1
 timeformat="%d/%m/%y %T"
 quasseluser="%$USER%"
-dblocaton="/var/lib/quassel/quassel-storage.sqlite"
+dblocation="/var/lib/quassel/quassel-storage.sqlite"
 #Get the parameters
 while getopts 'n:c:t:s:e:o:f:q:d:' flag; do
 	case $flag in 
@@ -39,7 +39,7 @@ fi
 if [ ! -f $output ]; then
 	touch $output
 fi
-sqlite3 -csv $dblocation "SELECT backlog.time,buffer.buffername,sender.sender,backlog.message FROM backlog,buffer,sender,quasseluser WHERE backlog.time BETWEEN $time AND $endtime AND quasseluser.username LIKE \"$quasseluser\" AND buffer.userid = quasseluser.userid AND backlog.senderid = sender.senderid AND backlog.bufferid = buffer.bufferid AND buffer.buffername LIKE \"$channel\" AND sender.sender like \"$nick\" AND backlog.message LIKE \"$search\"" > "$output"
+sqlite3 -csv "$dblocation" "SELECT backlog.time,buffer.buffername,sender.sender,backlog.message FROM backlog,buffer,sender,quasseluser WHERE backlog.time BETWEEN $time AND $endtime AND quasseluser.username LIKE \"$quasseluser\" AND buffer.userid = quasseluser.userid AND backlog.senderid = sender.senderid AND backlog.bufferid = buffer.bufferid AND buffer.buffername LIKE \"$channel\" AND sender.sender like \"$nick\" AND backlog.message LIKE \"$search\"" > "$output"
 touch "$output.tmp"
 tmpfile="$output.tmp"
 awk -F, -vtimeformat="$timeformat" 'BEGIN {OFS=","}{$1=strftime(timeformat,$1);split($3,a,"!");$3="<"a[1]">";print}' $output > $tmpfile
