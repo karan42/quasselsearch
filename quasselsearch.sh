@@ -1,5 +1,5 @@
 #!/bin/bash
-#Usage : quasselsearch.sh -n <nick> -c <channel> -t start date in the format "YYYY-MM-DD HH:MM:SS" -e end date in same format -s search term -o output file 
+#Usage : quasselsearch.sh -n <nick> -c <channel> -t start date in the format "YYYY-MM-DD HH:MM:SS" -e end date in same format -s search term -o output file -q quassel user defaults to $USER -d quassel database location , defaults to /var/lib/quassel/quassel-storae.sqlite
 #Everything is optional
 
 
@@ -14,8 +14,9 @@ endtime="2524626000"
 stdout=1
 timeformat="%d/%m/%y %T"
 quasseluser="%$USER%"
+dblocaton="/var/lib/quassel/quassel-storage.sqlite"
 #Get the parameters
-while getopts 'n:c:t:s:e:o:f:q:' flag; do
+while getopts 'n:c:t:s:e:o:f:q:d:' flag; do
 	case $flag in 
 		n) nick="%$OPTARG%" ;;
 		c) channel="%$OPTARG%" ;;
@@ -25,6 +26,7 @@ while getopts 'n:c:t:s:e:o:f:q:' flag; do
 		o) output=$OPTARG ;;
 		f) timeformat="$OPTARG" ;;
 		q) quasseluser="$OPTARG" ;;
+		d) dblocation="$OPTARG" ;;
 		*) echo "ERROR" ;;
 		esac
 	done
@@ -37,7 +39,7 @@ fi
 if [ ! -f $output ]; then
 	touch $output
 fi
-sqlite3 -csv /var/lib/quassel/quassel-storage.sqlite "SELECT backlog.time,buffer.buffername,sender.sender,backlog.message FROM backlog,buffer,sender,quasseluser WHERE backlog.time BETWEEN $time AND $endtime AND quasseluser.username LIKE \"$quasseluser\" AND buffer.userid = quasseluser.userid AND backlog.senderid = sender.senderid AND backlog.bufferid = buffer.bufferid AND buffer.buffername LIKE \"$channel\" AND sender.sender like \"$nick\" AND backlog.message LIKE \"$search\"" > "$output"
+sqlite3 -csv $dblocation "SELECT backlog.time,buffer.buffername,sender.sender,backlog.message FROM backlog,buffer,sender,quasseluser WHERE backlog.time BETWEEN $time AND $endtime AND quasseluser.username LIKE \"$quasseluser\" AND buffer.userid = quasseluser.userid AND backlog.senderid = sender.senderid AND backlog.bufferid = buffer.bufferid AND buffer.buffername LIKE \"$channel\" AND sender.sender like \"$nick\" AND backlog.message LIKE \"$search\"" > "$output"
 touch "$output.tmp"
 tmpfile="$output.tmp"
 awk -F, -vtimeformat="$timeformat" 'BEGIN {OFS=","}{$1=strftime(timeformat,$1);split($3,a,"!");$3="<"a[1]">";print}' $output > $tmpfile
