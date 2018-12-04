@@ -1,5 +1,5 @@
 #!/bin/bash
-#Usage : quasselsearch.sh -n <nick> -c <channel> -t start date in the format "YYYY-MM-DD HH:MM:SS" -e end date in same format -s search term -o output file -q quassel user defaults to $USER -d quassel database location , defaults to /var/lib/quassel/quassel-storae.sqlite
+#Usage : quasselsearch.sh -n <nick> -c <channel> -t start date in the format "YYYY-MM-DD HH:MM:SS" -e end date in same format -s search term -o output file -q quassel user defaults to $USER -d quassel database location , defaults to /var/lib/quassel/quassel-storage.sqlite
 #Everything is optional
 
 
