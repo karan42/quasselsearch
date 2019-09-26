@@ -10,28 +10,30 @@ nick="%%"
 channel="%%"
 time=0
 search="%%"
-endtime="2524626000"
+endtime="2524626000000"
 stdout=1
-timeformat="%d/%m/%y %T"
+timeformat="%Y-%m-%d %T"
 quasseluser="%$USER%"
 dblocation="/var/lib/quassel/quassel-storage.sqlite"
+limit=1000
 #Get the parameters
-while getopts 'n:c:t:s:e:o:f:q:d:' flag; do
-	case $flag in 
+while getopts 'n:c:t:s:e:o:f:q:d:l:' flag; do
+	case $flag in
 		n) nick="%$OPTARG%" ;;
 		c) channel="%$OPTARG%" ;;
-		t) time=$(date -d "$OPTARG" "+%s") ;;
+		t) time=$(expr $(date -d "$OPTARG" "+%s") \* 1000) ;;
 		s) search="%$OPTARG%" ;;
-		e) endtime=$(date -d "$OPTARG" "+%s") ;;
+		e) endtime=$(expr $(date -d "$OPTARG" "+%s") \* 1000) ;;
 		o) output=$OPTARG ;;
 		f) timeformat="$OPTARG" ;;
 		q) quasseluser="$OPTARG" ;;
 		d) dblocation="$OPTARG" ;;
+		l) limit="$OPTARG" ;;
 		*) echo "ERROR" ;;
 		esac
 	done
 
-if [ ! $output ]; then 
+if [ ! $output ]; then
 	output=/tmp/chatlogs.kk
 	stdout=0
 fi
@@ -39,10 +41,10 @@ fi
 if [ ! -f $output ]; then
 	touch $output
 fi
-sqlite3 -csv "$dblocation" "SELECT backlog.time,buffer.buffername,sender.sender,backlog.message FROM backlog,buffer,sender,quasseluser WHERE backlog.time BETWEEN $time AND $endtime AND quasseluser.username LIKE \"$quasseluser\" AND buffer.userid = quasseluser.userid AND backlog.senderid = sender.senderid AND backlog.bufferid = buffer.bufferid AND buffer.buffername LIKE \"$channel\" AND sender.sender like \"$nick\" AND backlog.message LIKE \"$search\"" > "$output"
+sqlite3 -csv "$dblocation" "SELECT backlog.time,buffer.buffername,sender.sender,backlog.message FROM backlog,buffer,sender,quasseluser WHERE backlog.time BETWEEN $time AND $endtime AND quasseluser.username LIKE \"$quasseluser\" AND buffer.userid = quasseluser.userid AND backlog.senderid = sender.senderid AND backlog.bufferid = buffer.bufferid AND buffer.buffername LIKE \"$channel\" AND sender.sender like \"$nick\" AND backlog.message LIKE \"$search\" LIMIT $limit" > "$output"
 touch "$output.tmp"
 tmpfile="$output.tmp"
-awk -F, -vtimeformat="$timeformat" 'BEGIN {OFS=","}{$1=strftime(timeformat,$1);split($3,a,"!");$3="<"a[1]">";print}' $output > $tmpfile
+awk -F, -vtimeformat="$timeformat" 'BEGIN {OFS=","}{$1=strftime(timeformat,$1/1000);split($3,a,"!");$3="<"a[1]">";print}' $output > $tmpfile
 mv $tmpfile $output
 if [ $stdout -eq 0 ]; then
 	cat $output
